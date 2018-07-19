@@ -48,24 +48,27 @@ public abstract class GraphmatJob {
 		this.vertexTranslation = vertexTranslation;
 		this.jobId = jobId;
 	}
-	
+
 	public void setOutputPath(String file) {
 		this.outputPath = file;
 	}
-	
+
 	abstract protected String getExecutable();
 	abstract protected void addJobArguments(List<String> args);
-	
+
 	public void execute() throws IOException, InterruptedException {
 		List<String> args = new ArrayList<>();
 		args.add(graphPath);
 		addJobArguments(args);
-		
+
 		if (outputPath != null) {
 			args.add(outputPath);
 		}
-		
-		String cmdFormat = config.getString(GraphmatPlatform.RUN_COMMAND_FORMAT_KEY, "%s %s");
+
+		String cmdFormat = (config.getBoolean(GraphmatPlatform.ENABLE_SLURM_KEY)) ?
+				config.getString(GraphmatPlatform.RUN_COMMAND_FORMAT_KEY, "%s %s") :
+				config.getString(GraphmatPlatform.RUN_COMMAND_NO_SLURM_FORMAT_KEY, "%s %s");
+
 		GraphmatPlatform.runCommand(cmdFormat, GraphmatPlatform.BINARY_DIRECTORY + "/" + getExecutable(), args);
 	}
 }

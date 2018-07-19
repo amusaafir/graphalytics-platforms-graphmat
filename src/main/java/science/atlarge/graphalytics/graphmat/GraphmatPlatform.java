@@ -74,9 +74,14 @@ public class GraphmatPlatform implements GranulaAwarePlatform {
 	private static final String GRANULA_PROPERTIES_FILE = "granula.properties";
 
 	public static final String GRANULA_ENABLE_KEY = "benchmark.run.granula.enabled";
+	public static final String ENABLE_SLURM_KEY = "platform.graphmat.enable-slurm";
+	public static final String HOSTS_KEY = "platform.graphmat.hosts";
+	public static final String RUN_COMMAND_NO_SLURM_FORMAT_KEY = "platform.graphmat.command.run-no-slurm";
+	public static final String CONVERT_COMMAND_NO_SLURM_FORMAT_KEY = "platform.graphmat.command.convert-no-slurm";
 	public static final String RUN_COMMAND_FORMAT_KEY = "platform.graphmat.command.run";
 	public static final String CONVERT_COMMAND_FORMAT_KEY = "platform.graphmat.command.convert";
 	public static final String INTERMEDIATE_DIR_KEY = "platform.graphmat.intermediate-dir";
+
 
 	public static String BINARY_DIRECTORY = "./bin/standard";
 	public static final String MTX_CONVERT_BINARY_NAME = BINARY_DIRECTORY + "/graph_convert";
@@ -126,9 +131,9 @@ public class GraphmatPlatform implements GranulaAwarePlatform {
 
 		// Convert from Graphalytics VE format to intermediate format
 		vertexTranslation = GraphConverter.parseAndWrite(formattedGraph, intermediateFile);
-                String vertexTranslationFile = createIntermediateFile(formattedGraph.getName() + "_vertex_translation", "bin");
-                BinIO.storeObject(vertexTranslation, vertexTranslationFile);
-                LOG.info("Stored vertex translation in: {}", vertexTranslationFile);
+		String vertexTranslationFile = createIntermediateFile(formattedGraph.getName() + "_vertex_translation", "bin");
+		BinIO.storeObject(vertexTranslation, vertexTranslationFile);
+		LOG.info("Stored vertex translation in: {}", vertexTranslationFile);
 
 		// Check if graph has weights
 		boolean isWeighted = false;
@@ -159,7 +164,11 @@ public class GraphmatPlatform implements GranulaAwarePlatform {
 
 		// Convert from intermediate format to MTX format
 		boolean isDirected = formattedGraph.isDirected();
-		String cmdFormat = benchmarkConfig.getString(CONVERT_COMMAND_FORMAT_KEY, "%s %s");
+
+		String cmdFormat = (benchmarkConfig.getBoolean(GraphmatPlatform.ENABLE_SLURM_KEY)) ?
+				benchmarkConfig.getString(GraphmatPlatform.CONVERT_COMMAND_FORMAT_KEY, "%s %s") :
+				benchmarkConfig.getString(GraphmatPlatform.CONVERT_COMMAND_NO_SLURM_FORMAT_KEY, "%s %s");
+
 		List<String> args = new ArrayList<>();
 
 		args.clear();
@@ -232,7 +241,7 @@ public class GraphmatPlatform implements GranulaAwarePlatform {
 
 
 
-                boolean translateVertexProperty = false;
+		boolean translateVertexProperty = false;
 		switch (algorithm) {
 			case BFS:
 				job = new BreadthFirstSearchJob(benchmarkConfig, graphFile, vertexTranslation, (BreadthFirstSearchParameters) params, benchmarkRun.getId());
@@ -247,7 +256,7 @@ public class GraphmatPlatform implements GranulaAwarePlatform {
 				job = new SingleSourceShortestPathJob(benchmarkConfig, graphFile, vertexTranslation, (SingleSourceShortestPathsParameters) params, benchmarkRun.getId());
 				break;
 			case CDLP:
-                                translateVertexProperty = true;
+				translateVertexProperty = true;
 				job = new CommunityDetectionLPJob(benchmarkConfig, graphFile, isDirected ? "1" : "0", vertexTranslation, (CommunityDetectionLPParameters) params, benchmarkRun.getId());
 				break;
 			case LCC:
@@ -274,7 +283,7 @@ public class GraphmatPlatform implements GranulaAwarePlatform {
 						intermediateOutputPath,
 						outputFile.toAbsolutePath().toString(),
 						vertexTranslation,
-                                                translateVertexProperty);
+						translateVertexProperty);
 			}
 		} catch(Exception e) {
 			throw new PlatformExecutionException("failed to execute command", e);
