@@ -22,7 +22,7 @@ if (GRANULA)
 endif ()
 
 
-set (CMAKE_CXX_COMPILER mpiicpc)
+set (CMAKE_CXX_COMPILER mpic++)
 
 find_package(MPI REQUIRED)
 include_directories (${MPI_CXX_INCLUDE_PATH})
@@ -39,9 +39,9 @@ add_definitions (-DHAS_BOOST)
 include_directories(SYSTEM "${GRAPHMAT_HOME}/include")
 include_directories(SYSTEM "${GRAPHMAT_DIST_HOME}")
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -qopenmp -xHost")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp --std=c++11 -I/usr/include/mpi/ -march=native")
 set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -Wall -pedantic -Wextra -Wno-unused-variable -D__TIMING -D__DEBUG")
-set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -ipo")
+set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -flto -fwhole-program")
 
 add_executable (bfs bfs.cpp)
 TARGET_LINK_LIBRARIES(bfs ${Boost_LIBRARIES} )
