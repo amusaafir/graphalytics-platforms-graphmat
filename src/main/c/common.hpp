@@ -91,7 +91,7 @@ void print_graph(const char *filename, const GraphMat::Graph<T, E>& graph, MPI_D
 
         if (file_stream != NULL) {
             if (!file_stream->good()) {
-                std::cerr << "failed to write output to file" << endl;
+                std::cerr << "failed to write output to file" << std::endl;
             }
     
             file_stream->flush();
